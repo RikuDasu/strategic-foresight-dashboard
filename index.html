@@ -1,0 +1,476 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI × エネルギー × ミニマルファブ — 未来予測ダッシュボード</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #08080d; --bg-card: #0f0f18; --bg-card-hover: #161624;
+    --accent-energy: #f59e0b; --accent-ai: #8b5cf6; --accent-content: #06b6d4;
+    --accent-society: #ef4444; --accent-human: #10b981; --accent-skill: #f472b6;
+    --conf-a: #22c55e; --conf-b: #eab308; --conf-c: #f97316; --conf-x: #ef4444;
+    --text-primary: #e8e8ed; --text-secondary: #8888a0; --text-dim: #4a4a65; --border: #1e1e32;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg-deep); color:var(--text-primary); font-family:'Noto Sans JP',sans-serif; font-weight:400; line-height:1.65; overflow-x:hidden; }
+
+  /* HERO */
+  .hero { height:100vh; min-height:480px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:40px 20px; position:relative; overflow:hidden; }
+  .orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; animation:orbF 8s ease-in-out infinite alternate; }
+  .orb.a { width:500px; height:500px; top:-150px; left:-100px; background:rgba(139,92,246,.07); }
+  .orb.b { width:400px; height:400px; bottom:-100px; right:-80px; background:rgba(245,158,11,.06); animation-delay:-4s; }
+  @keyframes orbF { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(30px,-20px) scale(1.08)} }
+  .hero-label { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:4px; text-transform:uppercase; color:var(--accent-ai); margin-bottom:20px; opacity:0; animation:fadeUp .7s ease forwards .2s; }
+  .hero h1 { font-size:clamp(24px,5vw,52px); font-weight:900; line-height:1.25; margin-bottom:14px; background:linear-gradient(135deg,var(--text-primary),var(--accent-ai),var(--accent-energy)); background-size:200% 200%; -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:fadeUp .7s ease forwards .35s, gShift 6s ease infinite; opacity:0; }
+  @keyframes gShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+  .hero-sub { font-size:13px; color:var(--text-secondary); max-width:560px; font-weight:300; line-height:1.9; opacity:0; animation:fadeUp .7s ease forwards .5s; }
+  .scroll-hint { position:absolute; bottom:28px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--text-dim); opacity:0; animation:fadeUp .7s ease forwards .9s; }
+  .scroll-hint::after { content:''; display:block; width:1px; height:32px; background:linear-gradient(to bottom,var(--text-dim),transparent); margin:8px auto 0; animation:pulse 2s ease infinite; }
+
+  /* LEGENDS */
+  .legends-bar { max-width:960px; margin:0 auto 16px; padding:0 20px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+  .lc { display:flex; align-items:center; gap:5px; font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--text-secondary); padding:3px 8px; border-radius:5px; background:var(--bg-card); border:1px solid var(--border); }
+  .lc .d { width:6px; height:6px; border-radius:50%; }
+  .d.energy{background:var(--accent-energy)} .d.ai{background:var(--accent-ai)} .d.content{background:var(--accent-content)} .d.society{background:var(--accent-society)} .d.human{background:var(--accent-human)} .d.skill{background:var(--accent-skill)}
+  .conf-bar { max-width:960px; margin:0 auto 16px; padding:0 20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:6px; }
+  .cc { display:flex; align-items:center; gap:7px; padding:6px 10px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; }
+  .cb { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; width:24px; height:24px; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; overflow:hidden; }
+  .cb::after { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,.12) 50%,transparent 60%); animation:shimmer 3s ease infinite; }
+  @keyframes shimmer { 0%{transform:translateX(-100%) rotate(25deg)} 100%{transform:translateX(100%) rotate(25deg)} }
+  .cb.a{background:rgba(34,197,94,.15);color:var(--conf-a)} .cb.b{background:rgba(234,179,8,.15);color:var(--conf-b)} .cb.c{background:rgba(249,115,22,.15);color:var(--conf-c)} .cb.x{background:rgba(239,68,68,.15);color:var(--conf-x)}
+  .cc span { font-size:10px; color:var(--text-secondary); font-weight:300; }
+
+  /* PHASE */
+  .phase { max-width:960px; margin:0 auto 8px; padding:0 20px; }
+  .ph { text-align:center; margin-bottom:14px; padding-top:24px; }
+  .py { font-family:'JetBrains Mono',monospace; font-size:clamp(36px,6vw,60px); font-weight:700; line-height:1; margin-bottom:4px; position:relative; display:inline-block; }
+  .py::after { content:''; position:absolute; bottom:-4px; left:10%; width:80%; height:2px; border-radius:2px; animation:lineG 2s ease-in-out infinite alternate; }
+  @keyframes lineG { 0%{opacity:.3;transform:scaleX(.6)} 100%{opacity:1;transform:scaleX(1)} }
+  .py.ai{color:var(--accent-ai)} .py.ai::after{background:var(--accent-ai)}
+  .py.ct{color:var(--accent-content)} .py.ct::after{background:var(--accent-content)}
+  .py.so{color:var(--accent-society)} .py.so::after{background:var(--accent-society)}
+  .py.en{color:var(--accent-energy)} .py.en::after{background:var(--accent-energy)}
+  .py.hu{color:var(--accent-human)} .py.hu::after{background:var(--accent-human)}
+  .pt { font-size:clamp(15px,2.2vw,21px); font-weight:700; margin-bottom:3px; }
+  .ps { font-size:12px; color:var(--text-secondary); font-weight:300; }
+
+  /* ACTION BANNER */
+  .ab { max-width:960px; margin:0 auto 14px; padding:0 20px; }
+  .abi { position:relative; border-radius:14px; padding:18px 22px; overflow:hidden; border:1px solid rgba(255,255,255,.06); }
+  .abi::before { content:''; position:absolute; inset:0; border-radius:14px; z-index:0; animation:abBg 4s ease infinite alternate; }
+  .abi.t-ai::before{background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(139,92,246,.03),rgba(6,182,212,.06))}
+  .abi.t-ct::before{background:linear-gradient(135deg,rgba(6,182,212,.12),rgba(6,182,212,.03),rgba(244,114,182,.06))}
+  .abi.t-so::before{background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(239,68,68,.03),rgba(245,158,11,.06))}
+  .abi.t-en::before{background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.03),rgba(139,92,246,.06))}
+  .abi.t-hu::before{background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(16,185,129,.03),rgba(139,92,246,.06))}
+  @keyframes abBg { 0%{opacity:.7} 100%{opacity:1} }
+  .abi::after { content:''; position:absolute; inset:-1px; border-radius:14px; z-index:0; animation:bPulse 3s ease infinite; }
+  .abi.t-ai::after{box-shadow:inset 0 0 0 1px rgba(139,92,246,.2)}
+  .abi.t-ct::after{box-shadow:inset 0 0 0 1px rgba(6,182,212,.2)}
+  .abi.t-so::after{box-shadow:inset 0 0 0 1px rgba(239,68,68,.2)}
+  .abi.t-en::after{box-shadow:inset 0 0 0 1px rgba(245,158,11,.2)}
+  .abi.t-hu::after{box-shadow:inset 0 0 0 1px rgba(16,185,129,.2)}
+  @keyframes bPulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+  .abi>* { position:relative; z-index:1; }
+
+  .at { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .ae { font-size:26px; animation:bounce 2s ease infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+  .ah { font-size:clamp(15px,2.4vw,20px); font-weight:900; line-height:1.3; }
+  .hl { display:inline; padding:1px 6px; border-radius:4px; animation:hlP 2.5s ease infinite; }
+  .hl.ai{background:rgba(139,92,246,.2);color:#c4b5fd}
+  .hl.ct{background:rgba(6,182,212,.2);color:#67e8f9}
+  .hl.so{background:rgba(239,68,68,.2);color:#fca5a5}
+  .hl.en{background:rgba(245,158,11,.2);color:#fcd34d}
+  .hl.hu{background:rgba(16,185,129,.2);color:#6ee7b7}
+  @keyframes hlP { 0%,100%{opacity:.85} 50%{opacity:1} }
+
+  .ai-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
+  .ai-item { display:flex; align-items:flex-start; gap:8px; padding:10px 12px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.05); border-radius:8px; transition:all .25s ease; }
+  .ai-item:hover { background:rgba(255,255,255,.06); transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,.3); }
+  .an { font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700; line-height:1; flex-shrink:0; width:26px; height:26px; display:flex; align-items:center; justify-content:center; border-radius:6px; }
+  .an.ai{color:var(--accent-ai);background:rgba(139,92,246,.12)}
+  .an.ct{color:var(--accent-content);background:rgba(6,182,212,.12)}
+  .an.so{color:var(--accent-society);background:rgba(239,68,68,.12)}
+  .an.en{color:var(--accent-energy);background:rgba(245,158,11,.12)}
+  .an.hu{color:var(--accent-human);background:rgba(16,185,129,.12)}
+  .ait { font-size:12px; font-weight:700; line-height:1.4; margin-bottom:1px; }
+  .aid { font-size:10px; color:var(--text-secondary); font-weight:300; line-height:1.5; }
+
+  .abot { margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,.06); display:flex; align-items:center; gap:8px; }
+  .awl { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1.5px; text-transform:uppercase; padding:2px 6px; border-radius:3px; flex-shrink:0; }
+  .awl.ai{color:var(--accent-ai);background:rgba(139,92,246,.12)}
+  .awl.ct{color:var(--accent-content);background:rgba(6,182,212,.12)}
+  .awl.so{color:var(--accent-society);background:rgba(239,68,68,.12)}
+  .awl.en{color:var(--accent-energy);background:rgba(245,158,11,.12)}
+  .awl.hu{color:var(--accent-human);background:rgba(16,185,129,.12)}
+  .awt { font-size:11px; font-weight:500; line-height:1.6; }
+
+  /* PRED CARDS */
+  .pg { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+  .pc { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; overflow:hidden; transition:all .25s ease; }
+  .pc:hover { background:var(--bg-card-hover); transform:translateY(-1px); box-shadow:0 4px 20px rgba(0,0,0,.3); }
+  .pm { display:grid; grid-template-columns:42px 1fr 20px; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; }
+  @media(max-width:600px){.pm{grid-template-columns:36px 1fr 18px;gap:8px;padding:10px 12px}}
+  .pcf { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .pcf .cb { width:30px; height:30px; font-size:12px; }
+  .pn { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--text-dim); }
+  .ptg { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1.5px; text-transform:uppercase; display:inline-block; padding:1px 5px; border-radius:3px; margin-bottom:2px; }
+  .ptg.energy{color:var(--accent-energy);background:rgba(245,158,11,.1)}
+  .ptg.ai{color:var(--accent-ai);background:rgba(139,92,246,.1)}
+  .ptg.content{color:var(--accent-content);background:rgba(6,182,212,.1)}
+  .ptg.society{color:var(--accent-society);background:rgba(239,68,68,.1)}
+  .ptg.human{color:var(--accent-human);background:rgba(16,185,129,.1)}
+  .ptt { font-size:12px; font-weight:700; line-height:1.4; margin-bottom:1px; }
+  .psu { font-size:10.5px; color:var(--text-secondary); font-weight:300; line-height:1.5; }
+  .pto { font-size:12px; color:var(--text-dim); transition:transform .3s ease; user-select:none; }
+  .pc.open .pto { transform:rotate(180deg); }
+  .pd { max-height:0; overflow:hidden; transition:max-height .35s ease; border-top:1px solid transparent; }
+  .pc.open .pd { max-height:400px; border-top-color:var(--border); }
+  .pdi { padding:8px 14px 12px; display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  @media(max-width:680px){.pdi{grid-template-columns:1fr}}
+  .db { padding:8px 10px; border-radius:6px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.04); }
+  .dl { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:3px; }
+  .dl.basis{color:var(--conf-a)} .dl.collapse{color:var(--conf-x)} .dl.metric{color:var(--accent-content)}
+  .dt { font-size:10.5px; color:var(--text-secondary); font-weight:300; line-height:1.6; }
+
+  /* INSIGHT */
+  .ib { max-width:760px; margin:10px auto 18px; padding:16px 18px; border-radius:12px; position:relative; overflow:hidden; }
+  .ib::before { content:''; position:absolute; inset:0; border-radius:12px; padding:1px; background:linear-gradient(135deg,var(--accent-ai),var(--accent-energy)); -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0); mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0); -webkit-mask-composite:xor; mask-composite:exclude; }
+  .ib h3 { font-size:13px; font-weight:700; margin-bottom:5px; }
+  .ib p { font-size:11px; color:var(--text-secondary); font-weight:300; line-height:1.8; }
+
+  /* EVO */
+  .ev { max-width:920px; margin:20px auto; padding:0 20px; }
+  .ev h2 { text-align:center; font-size:clamp(16px,2.2vw,22px); font-weight:700; margin-bottom:4px; }
+  .evsub { text-align:center; font-size:11px; color:var(--text-secondary); margin-bottom:14px; font-weight:300; }
+  .evl { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .evli { display:flex; align-items:center; gap:4px; font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--text-secondary); }
+  .evlp { width:16px; height:8px; border-radius:4px; }
+  .evlp.r{background:rgba(16,185,129,.35)} .evlp.p{background:rgba(245,158,11,.35)} .evlp.x{background:rgba(239,68,68,.25)} .evlp.e{background:rgba(139,92,246,.35)}
+  .er { display:grid; grid-template-columns:56px 1fr; gap:10px; }
+  .eyc { display:flex; flex-direction:column; align-items:center; }
+  .eyl { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; padding:3px 0; }
+  .eyln { width:2px; flex:1; background:var(--border); margin-top:2px; position:relative; }
+  .eyln::before { content:''; position:absolute; top:0; left:-3px; width:8px; height:8px; border-radius:50%; animation:dP 2s ease infinite; }
+  .er:nth-child(1) .eyln::before{background:var(--accent-ai)} .er:nth-child(2) .eyln::before{background:var(--accent-content)} .er:nth-child(3) .eyln::before{background:var(--accent-society)} .er:nth-child(4) .eyln::before{background:var(--accent-energy)} .er:nth-child(5) .eyln::before{background:var(--accent-human)}
+  @keyframes dP { 0%,100%{opacity:.4;transform:scale(.8)} 50%{opacity:1;transform:scale(1.2)} }
+  .eco { padding:2px 0 16px; }
+  .eca { margin-bottom:6px; }
+  .ecl { font-size:9px; font-family:'JetBrains Mono',monospace; letter-spacing:1px; margin-bottom:3px; color:var(--text-dim); }
+  .eps { display:flex; flex-wrap:wrap; gap:4px; }
+  .ep { font-size:10px; padding:3px 9px; border-radius:12px; font-weight:500; transition:all .2s ease; }
+  .ep:hover{transform:translateY(-1px);filter:brightness(1.2)}
+  .ep.r{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:var(--accent-human)}
+  .ep.p{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--accent-energy)}
+  .ep.x{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.15);color:rgba(239,68,68,.5);text-decoration:line-through;text-decoration-color:rgba(239,68,68,.2)}
+  .ep.e{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.22);color:var(--accent-ai)}
+
+  /* STACK */
+  .ss { max-width:860px; margin:20px auto; padding:0 20px; }
+  .ss h2 { text-align:center; font-size:clamp(16px,2.2vw,22px); font-weight:700; margin-bottom:16px; }
+  .ls { display:flex; flex-direction:column; gap:1px; }
+  .ly { display:grid; grid-template-columns:90px 1fr 90px; align-items:center; padding:10px 14px; border-radius:6px; transition:all .25s ease; }
+  @media(max-width:600px){.ly{grid-template-columns:1fr;gap:2px;padding:8px 10px}}
+  .ly:hover{transform:translateX(4px)}
+  .ll { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; }
+  .lcn { font-size:12px; font-weight:500; }
+  .lst { font-size:10px; text-align:right; font-weight:300; }
+  @media(max-width:600px){.lst{text-align:left}}
+  .ly.l1{background:linear-gradient(90deg,rgba(245,158,11,.06),transparent)} .ly.l1 .ll{color:var(--accent-energy)}
+  .ly.l2{background:linear-gradient(90deg,rgba(139,92,246,.06),transparent)} .ly.l2 .ll{color:var(--accent-ai)}
+  .ly.l3{background:linear-gradient(90deg,rgba(6,182,212,.06),transparent)} .ly.l3 .ll{color:var(--accent-content)}
+  .ly.l4{background:linear-gradient(90deg,rgba(239,68,68,.06),transparent)} .ly.l4 .ll{color:var(--accent-society)}
+  .ly.l5{background:linear-gradient(90deg,rgba(16,185,129,.06),transparent)} .ly.l5 .ll{color:var(--accent-human)}
+  .ad { text-align:center; padding:2px 0; color:var(--text-dim); font-size:11px; }
+
+  /* FOOTER */
+  .ft { text-align:center; padding:40px 20px; border-top:1px solid var(--border); max-width:640px; margin:20px auto 0; }
+  .fq { font-size:clamp(13px,2vw,17px); font-weight:300; line-height:1.9; margin-bottom:14px; }
+  .fa { font-size:9px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; letter-spacing:2px; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
+  .fade-in { opacity:0; transform:translateY(16px); transition:opacity .45s ease,transform .45s ease; }
+  .fade-in.visible { opacity:1; transform:translateY(0); }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="orb a"></div><div class="orb b"></div>
+  <div class="hero-label">Strategic Foresight Dashboard — 2026–2040+</div>
+  <h1>AI × エネルギー × ミニマルファブ<br>未来予測ダッシュボード</h1>
+  <p class="hero-sub">Agent移行、新アーキテクチャ、$660B投資、ミニマルファブ化、起業ベース社会<br>各予測に確度・根拠・崩壊条件を付与。<strong>「ミニマル・モノポリー」</strong>戦略を軸に全構造を統合</p>
+  <div class="scroll-hint">SCROLL</div>
+</section>
+
+<div class="conf-bar fade-in">
+  <div class="cc"><span class="cb a">A</span><span>高確度 — 5年以内に高確率</span></div>
+  <div class="cc"><span class="cb b">B</span><span>中確度 — 方向性は妥当</span></div>
+  <div class="cc"><span class="cb c">C</span><span>低確度 — 前提が多い</span></div>
+  <div class="cc"><span class="cb x">X</span><span>仮説 — 探索対象</span></div>
+</div>
+<div class="legends-bar fade-in">
+  <div class="lc"><span class="d energy"></span>エネルギー</div>
+  <div class="lc"><span class="d ai"></span>AI・技術</div>
+  <div class="lc"><span class="d content"></span>コンテンツ</div>
+  <div class="lc"><span class="d society"></span>経済・社会</div>
+  <div class="lc"><span class="d human"></span>人間の価値</div>
+  <div class="lc"><span class="d skill"></span>製造・ファブ</div>
+</div>
+
+<!-- ========== 2026 ========== -->
+<div class="phase fade-in"><div class="ph">
+  <div class="py ai">2026</div>
+  <div class="pt">AIエージェント元年 — Chat→自律実行への不可逆シフト</div>
+  <div class="ps">対話から行動へ。動画生成・ロボティクス・ワールドモデルが同時爆発。$660B超のインフラ投資。触ってる側と触ってない側の差は複利で開く</div>
+</div></div>
+
+<div class="ab fade-in"><div class="abi t-ai">
+  <div class="at">
+    <div class="ae">⚡</div>
+    <div class="ah"><span class="hl ai">思考のOS自体を入れ替えろ</span>——この差は複利で開く</div>
+  </div>
+  <div class="ai-grid">
+    <div class="ai-item"><div class="an ai">1</div><div><div class="ait">Chat→Agent：AIに「指示」するのではなく「目的」を渡せ</div><div class="aid">2025年までのAIは対話（Chat）。2026年からは自律実行（Agent）。Claude Code、Codex、MCPが「考えて→計画して→実行する」AIに進化。Gartner予測：2026年末にエンタープライズアプリの40%にAIエージェント搭載</div></div></div>
+    <div class="ai-item"><div class="an ai">2</div><div><div class="ait">拡散モデル→ワールドモデル：AIが「世界」を理解し始めた</div><div class="aid">動画生成（Seedance 2.0/Sora 2）の裏側で、拡散モデルが物理法則を学習するワールドモデルへ進化中。1Xロボティクスは動画予測→ロボット行動変換を実証。ゲームのように操作可能な世界シミュレーションが登場</div></div></div>
+    <div class="ai-item"><div class="an ai">3</div><div><div class="ait">「まだ知らない人」との格差で稼げる窓は今だけ</div><div class="aid">日本国内のほとんどがまだ「AIすごいらしいね」止まり。格差を橋渡しするだけで金になる。ただし窓は1〜2年で閉じる。「小さな市場を独占」（ティール）する最後のチャンス</div></div></div>
+    <div class="ai-item"><div class="an ai">4</div><div><div class="ait">「ミニマル・モノポリー」を作れ——独自のオピニオンが堀になる</div><div class="aid">週末で誰でもプロダクトを作れる時代。真の防御壁は「構築力」ではなく「確固たる思想を持った視点」。判断の蓄積 × 模倣コストの高いプロセス × 特定コミュニティの「唯一の解」——これをいくつ作れるかのゲーム</div></div></div>
+  </div>
+  <div class="abot"><span class="awl ai">勝つ人物像</span><span class="awt">AIと対話しながら考える習慣 × 課金を投資と割り切る判断力 × 小さな独占領域を見つけて最初の一手を打てる人。技術の深さより、新しいものに触る速度と独自の視点</span></div>
+</div></div>
+
+<div class="phase fade-in"><div class="pg">
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb a">A</span><span class="pn">#01</span></div><div><span class="ptg ai">AI</span><div class="ptt">AIがChat→Agent（自律実行）へ不可逆的に移行する</div><div class="psu">対話型AIから目的駆動型AIへ。MCP/A2A等のプロトコル成熟。Gartner: 2026年末にエンタープライズアプリの40%にAIエージェント搭載</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">IBM・Google・Anthropicがエージェント基盤を本番投入。MCPがLinux Foundation傘下に。市場規模$78億→$520億(2030)へ急拡大</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">ガバナンス問題で大規模事故→規制凍結。レガシーシステム統合の壁が想定以上</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">エージェント搭載アプリ比率、MCP対応サービス数、エージェント起因の業務自動化率</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb a">A</span><span class="pn">#02</span></div><div><span class="ptg ai">AI・ロボ</span><div class="ptt">動画生成AI + ワールドモデル + ヒューマノイドロボットが同時爆発</div><div class="psu">拡散モデルが物理世界を学習。Tesla Optimusは量産準備段階に入り、中国メーカー比率は高水準（80%超との報告）。Unitree G1は約$13,500〜。1X NEOは予約受付後、初回出荷予定</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">動画生成モデルの品質向上が継続。ワールドモデル研究は拡散モデルから物理シミュレーション連携へ進展。Optimusは量産ライン準備と試験導入が公表され、2026年内の出荷計画が示されている</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">GPU供給制約で推論コスト急騰。ロボット安全規制強化。汎用性が期待に届かない</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">動画品質ベンチ、ヒューマノイド出荷台数、1台あたりコスト、商用採用社数</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb a">A</span><span class="pn">#03</span></div><div><span class="ptg society">経済</span><div class="ptt">AI活用層と非活用層の生産性差が10倍超に。格差は複利で拡大</div><div class="psu">乗り遅れると不可逆。AIで学習→AIの使い方が上手くなる正のループが回る側と回らない側で断絶</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">ホワイトカラー業務で時短効果が顕在化。差が複利で開く構造。日本は特に導入遅延で格差大</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">組織側のAI導入禁止、教育不足による普及遅延</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">導入率（業界別）、業務処理時間、一人あたり粗利</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#04</span></div><div><span class="ptg energy">エネルギー</span><div class="ptt">Big Tech $660B超投資 →「バブルか？足りないのか？」の分岐点</div><div class="psu">Amazon・Alphabet・Meta・Microsoftが高水準の設備投資を継続。「供給不足」見方と「ROIが見えにくい」見方が併存。IEA試算ではデータセンター電力需要は415TWh→945TWh(2030)</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">市場予測は幅が大きいが、AI向けCapex拡大トレンドは共通。OpenAIのStargateは今後4年で最大$500B計画。各社が供給制約（電力・サーバー・用地）を主張している点は一致</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">量子コンピュータ/省電力革命で既存インフラが一夜で陳腐化。リターン未達が確認されパニック売り。サーキットブレーカー不在で暴落加速</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">Capex/収益比率、データセンターkWh単価、AI関連CDS（信用リスク指標）、金銀価格の急変</div></div></div></div></div>
+</div></div>
+
+<div class="ib fade-in">
+  <h3>💰 $660B超投資は「バブル」か「まだ足りない」か</h3>
+  <p>2026年のAI Capexは米GDP比0.8%→1.5%に迫る。90年代末テレコムバブル水準。一部調査では、多くの組織がGenAI投資のROIを十分に実感できていない。一方Amazon CEO「AIキャパは設置した瞬間に売り切れる」。真実は両方——需要は本物だが投資はオーバーシュートする。金銀の一時的急落→反転のパターンに注意。データセンター電力需要が2030年に現在の2.3倍。「バブルか足りないか」の答えは「バブル的に足りない」</p>
+</div>
+
+<div class="ib fade-in">
+  <h3>🧬 新アーキテクチャ × ゼロ価値閾値 = 次のリセットポイント</h3>
+  <p>AI企業はSaaS企業と構造が違う。OSSに性能で抜かれた瞬間に価値がゼロに崩落する「ゼロ価値閾値」を持つ。市場ではAI企業に高いARRマルチプルが付く局面があるが、インフラコスト（限界費用≠ゼロ）を織り込むと評価の揺り戻しが起こりやすい。<strong>本当のリスクはMamba等の新アーキテクチャ</strong>。Transformerに最適化された$660Bのインフラが一夜で陳腐化する可能性。大手は新アーキを発見しても公開しない。学術論文とOSSが唯一の先行指標。基盤モデルはコモディティ化が進行中——次の価値はドメイン特化データにある</p>
+</div>
+
+<!-- ========== 2027-28 ========== -->
+<div class="phase fade-in"><div class="ph">
+  <div class="py ct">2027–28</div>
+  <div class="pt">コンテンツのコモディティ化 — 「何を作るか」の時代</div>
+  <div class="ps">制作技術の差がなくなり、構想力と世界観だけが差別化要因になる</div>
+</div></div>
+
+<div class="ab fade-in"><div class="abi t-ct">
+  <div class="at">
+    <div class="ae">🎬</div>
+    <div class="ah"><span class="hl ct">「完成図を描ける人間」</span>だけが生き残る</div>
+  </div>
+  <div class="ai-grid">
+    <div class="ai-item"><div class="an ct">1</div><div><div class="ait">「何を・どう見せるか」を決める力</div><div class="aid">AIが作れる以上、技術ではなく構想が全て。完成図を頭の中で描ける人間が指揮を執る。「構築は機械的プロセス」——真の堀は「確固たる思想を持った視点」</div></div></div>
+    <div class="ai-item"><div class="an ct">2</div><div><div class="ait">テキストで世界を組み立てる力</div><div class="aid">小説家・シナリオライターが直接映像化できる時代。活版印刷に匹敵する変化。「書ける人間」＝最強のAI監督</div></div></div>
+    <div class="ai-item"><div class="an ct">3</div><div><div class="ait">「小さな市場を独占する」戦略を取れ</div><div class="aid">ティール理論：巨大市場を狙うな。小さな市場を最初に支配し同心円的に拡大。Amazon→本、Facebook→ハーバード。ニッチで独占→展開が鉄則</div></div></div>
+    <div class="ai-item"><div class="an ct">4</div><div><div class="ait">判断の蓄積がコピーできない堀になる</div><div class="aid">プロダクトは週末で作れる。だが何年もの「判断の蓄積」は模倣できない。スイッチングコスト＝データ・文脈理解・操作の慣れ。「ラストムーバー」を狙え</div></div></div>
+  </div>
+  <div class="abot"><span class="awl ct">勝つ人物像</span><span class="awt">構想力 × AI実装力。ゲームデザイナー的な人間が従来の映画監督より適性がある。正規キャリアパスは崩壊する</span></div>
+</div></div>
+
+<div class="phase fade-in"><div class="pg">
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb a">A</span><span class="pn">#04</span></div><div><span class="ptg content">コンテンツ</span><div class="ptt">「選別する側」が最も儲かる構造の確立</div><div class="psu">コンテンツ供給過剰 × 可処分時間は1日24時間で不変。アグリゲーター圧勝</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">可処分時間固定。「選択コスト」がボトルネック</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">分散型レコメンド主流化。個人AIが直接キュレーション</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">プラットフォーム集中率、視聴時間シェア</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#05</span></div><div><span class="ptg human">人間の価値</span><div class="ptt">実力を証明した個人がプロ現場に直接参入</div><div class="psu">FPSゲーマーが軍に招かれるように、AI動画で実力を示せば正規ルートをすっ飛ばせる</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">品質平準化で「誰が作ったか」がコンテンツ価値を決定</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">新技術で再び技術格差が拡大</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">ヒット作の制作体制、非正規ルート参入者の割合</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#06</span></div><div><span class="ptg society">経済</span><div class="ptt">「知ってる側が抜く」ビジネスがAI透明化で崩壊</div><div class="psu">建築見積り、骨董品査定、せどり——情報格差の収穫が技術的に不可能に</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">価格比較/真贋判定のAI化進行</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">データアクセス制限、流通の閉鎖化</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">裁定機会の持続期間、粗利率推移</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb a">A</span><span class="pn">#07</span></div><div><span class="ptg skill">製造</span><div class="ptt">製造業のミニマルファブ化——3Dプリンター/レーザー加工の民生品化が完了</div><div class="psu">Bambu Lab H2D（ベース機は$1,899、レーザー/カッティングは上位構成）。消費者向け3Dプリンタ市場は拡大基調（調査により規模推計は幅あり）。「週末で誰でもモノが作れる」時代の到来</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">低価格帯モデルの構成比が上昇（2024年時点の各種市場調査）。Bambu Lab/Formlabs/xToolが品質と価格の両立を推進。ハイブリッド機（印刷+切削+彫刻）が出現</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">素材コスト高騰、品質が業務用に届かない、安全規制強化</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">個人向け複合機の出荷台数、Etsy/メルカリでの個人製造品流通量</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#08</span></div><div><span class="ptg society">経済</span><div class="ptt">「就職」から「起業ベース」へ——現代版商店街の復活</div><div class="psu">一部トップ校でも就職内定率の鈍化が報告。ジュニア人材需要の減速とあわせ、起業志向が上昇。「企業に就職しつつ副業で起業」が現実的な選択肢に</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">中間層の空洞化が進行。AI化でホワイトカラー業務の再編が進み、起業・複業の相対魅力が上昇。ミニマルファブ+AIでプロダクト製造の参入障壁が低下</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">UBI等の社会保障制度が先に整備される。大企業への就職がAI管理職化で延命</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">個人事業主比率、スタートアップ設立数、副業率、フリーランス人口</div></div></div></div></div>
+</div></div>
+
+<div class="ib fade-in">
+  <h3>⚡ 映画の権威性の崩壊 × ミニマルファブ = 製造業にも同じ構造</h3>
+  <p>コンテンツ制作で起きた「制作コスト崩壊→構想力だけが差別化」は、物理的な製造でも進行中。低価格3Dプリンタ/レーザー加工機の普及で「モノ作り」の参入障壁が大きく低下。大企業が残る理由は3つだけ：①規制認証（FDA/航空/原子力）②素材の根本供給（シリコンウェハー/レアアース/チタン）③安全上の不可逆性（人命に直結）。それ以外は全て「独自のオピニオン × 模倣困難なプロセス × 特定コミュニティの唯一の解」= ミニマル・モノポリーの勝負になる</p>
+</div>
+
+<!-- ========== 2029-32 ========== -->
+<div class="phase fade-in"><div class="ph">
+  <div class="py so">2029–32</div>
+  <div class="pt">労働コストの消失 — エネルギー本位制の胎動</div>
+  <div class="ps">全産業の変動コストが「電力」だけに収束していく</div>
+</div></div>
+
+<div class="ab fade-in"><div class="abi t-so">
+  <div class="at">
+    <div class="ae">🧭</div>
+    <div class="ah"><span class="hl so">正しい答えではなく、正しい問いを立てろ</span></div>
+  </div>
+  <div class="ai-grid">
+    <div class="ai-item"><div class="an so">1</div><div><div class="ait">まだ誰も問いを立てていない領域を見つける</div><div class="aid">AIが最適解を出した瞬間にその作業の経済的価値はゼロ。人間に残るのは「まだ最適化されてない場所を嗅ぎ当てる一瞬のひらめき」だけ</div></div></div>
+    <div class="ai-item"><div class="an so">2</div><div><div class="ait">全体の構造を俯瞰する力を持て</div><div class="aid">エネルギー→計算→生産→消費。個別スキルより、この全体像のどこにボトルネックがあるか見抜ける方が100倍価値がある</div></div></div>
+    <div class="ai-item"><div class="an so">3</div><div><div class="ait">「小さな独占」をいくつ持てるかのゲームに参加しろ</div><div class="aid">就職は不安定化し、起業がデフォルトに。ミニマルファブ（3D印刷+レーザー+AI）で個人が製造業を持てる。独自のオピニオン×現場の知恵×特定の顧客＝現代版商店街</div></div></div>
+    <div class="ai-item"><div class="an so">4</div><div><div class="ait">「真の通貨」はエネルギーだと理解する</div><div class="aid">貨幣＝人間の労働時間の抽象化ツール。労働が無価値になれば抽象化の土台が崩壊。全ての価値基準がエネルギーに収束する</div></div></div>
+  </div>
+  <div class="abot"><span class="awl so">勝つ人物像</span><span class="awt">答えじゃなく問いを生む人。複数領域を横断して「専門家をつなぐ」メタ思考者。個別スキルは全部AIが代替する</span></div>
+</div></div>
+
+<div class="phase fade-in"><div class="pg">
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#07</span></div><div><span class="ptg ai">AI・ロボ</span><div class="ptt">全産業で「人件費→電力コスト」への置換が加速</div><div class="psu">農業→ロボ、物流→自動運転、全部の共通入力が「電気」だけに</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">自動化ROI改善。Tesla Optimus等の汎用ロボ</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">ハード供給制約、安全規制・労組抵抗</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">自動化率、kWhあたり生産量</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#08</span></div><div><span class="ptg human">人間の価値</span><div class="ptt">「今日の仕事が来週には無価値」が常態化</div><div class="psu">最適解発見→AIが即学習→その作業の経済的価値ゼロ。寿命がどんどん短くなる</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">定型推論の自動化加速</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">規制業界で人間判断が残存</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">職務要件変化、スキル陳腐化速度</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb a">A</span><span class="pn">#09</span></div><div><span class="ptg content">コンテンツ</span><div class="ptt">キュレーション＝主要産業</div><div class="psu">情報量増 × 認知負荷増。「何を見るべきか」を決める側に権力集中</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">情報量と認知負荷の構造的非対称</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">個人AIが超高精度に最適化し仲介不要化</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">推薦経由トラフィック、サブスク継続率</div></div></div></div></div>
+</div></div>
+
+<div class="ib fade-in">
+  <h3>🔋 マスクの垂直統合 = ロックフェラーの宇宙版</h3>
+  <p>（将来構想を含む）発電→蓄電（Megapack）→移動式計算（Tesla+GPU）→通信（Starlink）→AI（xAI）という垂直統合が進む。核融合は依然として商用コスト課題が大きい。人間の身体もATP→筋収縮のエネルギー変換装置であり、最終的に価値は「電気」に収束するという視点</p>
+</div>
+
+<!-- ========== 2033-38 ========== -->
+<div class="phase fade-in"><div class="ph">
+  <div class="py en">2033–38</div>
+  <div class="pt">エネルギー＝通貨の時代</div>
+  <div class="ps">「電力を支配する者が世界を支配する」——権力構造の原始回帰</div>
+</div></div>
+
+<div class="ab fade-in"><div class="abi t-en">
+  <div class="at">
+    <div class="ae">🌍</div>
+    <div class="ah"><span class="hl en">エネルギーの流れ</span>を読める人間が次の覇者</div>
+  </div>
+  <div class="ai-grid">
+    <div class="ai-item"><div class="an en">1</div><div><div class="ait">どの国が何の電力を握るか——これが全ての土台</div><div class="aid">中国は原発爆速建設、米はSMR投資。中東の石油覇権と同じ構造が電力で再現される。エネルギー政策＝次の通貨発行権</div></div></div>
+    <div class="ai-item"><div class="an en">2</div><div><div class="ait">デジタルで代替できない「体験」を作れ</div><div class="aid">映画館＝ライブコンサート化。音楽配信がライブを駆逐しなかったように、「その場にいなければ得られない」価値は残る</div></div></div>
+    <div class="ai-item"><div class="an en">3</div><div><div class="ait">国境を越えて動ける力を持て</div><div class="aid">中国・中東・米国の三角形で世界が動く。その力学を理解し、間で動ける人間＝希少資源</div></div></div>
+    <div class="ai-item"><div class="an en">4</div><div><div class="ait">新しいルールの設計者になる</div><div class="aid">貨幣→エネルギー本位制への移行で、法律・取引・規制の枠組みが全部書き直される。ルールを作る側に立てるかどうか</div></div></div>
+  </div>
+  <div class="abot"><span class="awl en">勝つ人物像</span><span class="awt">物理法則レベルで世界を理解し、エネルギーの流れから逆算して意思決定できるテクノロジスト兼地政学者</span></div>
+</div></div>
+
+<div class="phase fade-in"><div class="pg">
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#10</span></div><div><span class="ptg energy">エネルギー</span><div class="ptt">国家競争の中心がエネルギー供給能力へシフト</div><div class="psu">中東石油と同構造が電力で再現。電力単価＝国力</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">AI/計算需要爆増。中国原発、米SMR進行</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">省電力革命で需要圧力劇的緩和</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">発電投資額、電力単価、系統増強速度</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#11</span></div><div><span class="ptg content">コンテンツ</span><div class="ptt">映画館やライブ＝プレミアム体験として生存</div><div class="psu">8K/16Kの物理的品質の壁 + 「現地にいる」体験の希少価値</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">デジタル複製容易化→現地体験の希少価値上昇</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">VR/AR/触覚が現地優位を削る</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">ライブ単価、動員率、リピート率</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb c">C</span><span class="pn">#12</span></div><div><span class="ptg energy">エネルギー</span><div class="ptt">通貨機能がエネルギー指標に連動し始める</div><div class="psu">紙幣の裏付け＝「労働時間」が消えた先に、何が通貨の裏付けになるか</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">産業価値と電力制約の連動。BTC PoW先行事例</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">金融制度の慣性、中央銀行の政治的抵抗</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">電力連動契約、電力デリバティブ市場</div></div></div></div></div>
+</div></div>
+
+<!-- ========== 2038+ ========== -->
+<div class="phase fade-in"><div class="ph">
+  <div class="py hu">2038+</div>
+  <div class="pt">人間の最終価値 — 脳内のブラックボックス</div>
+  <div class="ps">外部情報は全てAIがフラット化。残る非対称性は「個人の脳内の繋ぎ方」だけ</div>
+</div></div>
+
+<div class="ab fade-in"><div class="abi t-hu">
+  <div class="at">
+    <div class="ae">🧠</div>
+    <div class="ah"><span class="hl hu">自律的な基盤と人間関係の基盤</span>——これが人間の本質</div>
+  </div>
+  <div class="ai-grid">
+    <div class="ai-item"><div class="an hu">1</div><div><div class="ait">自分の軸で判断できる状態を作る</div><div class="aid">技術の波に振り回されるか、道具として使いこなすか。その差は「自分はこう思う」という哲学があるかどうかだけで決まる</div></div></div>
+    <div class="ai-item"><div class="an hu">2</div><div><div class="ait">信頼の蓄積に時間と認知力を投下する</div><div class="aid">人間同士の信頼や共有体験は複製不能。そこから生まれる化学反応＝「あの人と話して思いついた」が最大の価値源泉</div></div></div>
+    <div class="ai-item"><div class="an hu">3</div><div><div class="ait">誰も思いつかない繋ぎ方ができる脳を育てる</div><div class="aid">ドットは誰でもAIで無限に手に入る。価値は「繋ぎ方の独自性」だけ。多様な経験の蓄積が直結する。一見無駄な体験こそリターン最大</div></div></div>
+    <div class="ai-item"><div class="an hu">4</div><div><div class="ait">ミスしながら面白く生きろ</div><div class="aid">効率化の果てに、最も非効率な「人間らしさ」が最大の資産になる。美意識、哲学、ユーモア——コピーできない個人の蓄積が唯一の差別化</div></div></div>
+  </div>
+  <div class="abot"><span class="awl hu">本質</span><span class="awt">技術は全員がアクセスできる。最後に残るのは「あなたは何者か」——我思う、故に我あり</span></div>
+</div></div>
+
+<div class="phase fade-in"><div class="pg">
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#13</span></div><div><span class="ptg human">人間の価値</span><div class="ptt">脳内の連想パターンが情報非対称性の最終砦</div><div class="psu">外からは読めない。Neuralinkの倫理ハードルで当面は最後のブラックボックス</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">知識アクセス完全民主化後の唯一の非対称性</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">BCI実用化で脳内情報も外部化</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">ヒット企画の独自性評価、BCI普及率</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#14</span></div><div><span class="ptg human">人間の価値</span><div class="ptt">「予想の裏切り」= お笑い的思考が経済価値に</div><div class="psu">AIはパターン学習。パターンを「意図的に壊す」のは人間だけ。最適化の対極こそ価値</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">同質アウトプット時代の構造的帰結</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">AIが文化文脈を完全模倣</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">クリエイター収益分布、ブランドプレミアム</div></div></div></div></div>
+  <div class="pc" onclick="this.classList.toggle('open')"><div class="pm"><div class="pcf"><span class="cb b">B</span><span class="pn">#15</span></div><div><span class="ptg human">人間の価値</span><div class="ptt">「あなたは何者か」が最終的な競争優位</div><div class="psu">自律的基盤 × 人間関係基盤 × 哲学。400年前のデカルトの問いに回帰する</div></div><div class="pto">▼</div></div><div class="pd"><div class="pdi"><div class="db"><div class="dl basis">根拠</div><div class="dt">技術アクセス完全平準化。人格/IPが効く構造</div></div><div class="db"><div class="dl collapse">崩れる条件</div><div class="dt">完全匿名・代替可能市場への収束</div></div><div class="db"><div class="dl metric">観測指標</div><div class="dt">個人ブランド収益、コミュニティ密度</div></div></div></div></div>
+</div></div>
+
+<!-- ===== EVOLUTION ===== -->
+<div class="ev fade-in">
+  <h2>能力の価値変遷マップ</h2>
+  <p class="evsub">各スキルの経済的価値がどう推移するか</p>
+  <div class="evl">
+    <div class="evli"><span class="evlp r"></span>上昇中</div>
+    <div class="evli"><span class="evlp p"></span>ピーク</div>
+    <div class="evli"><span class="evlp x"></span>消滅</div>
+    <div class="evli"><span class="evlp e"></span>不変</div>
+  </div>
+  <div>
+    <div class="er"><div class="eyc"><div class="eyl" style="color:var(--accent-ai)">2026</div><div class="eyln"></div></div><div class="eco">
+      <div class="eca"><div class="ecl">最重要</div><div class="eps"><span class="ep p">Agent設計・MCP活用</span><span class="ep p">情報格差の収穫</span><span class="ep p">ミニマル独占戦略</span></div></div>
+      <div class="eca"><div class="ecl">育て始める</div><div class="eps"><span class="ep r">物語構築力</span><span class="ep r">ブランド構築</span><span class="ep r">独自のオピニオン形成</span></div></div>
+      <div class="eca"><div class="ecl">衰退開始</div><div class="eps"><span class="ep x">単純コーディング</span><span class="ep x">映像制作技術</span><span class="ep x">知識暗記</span></div></div>
+    </div></div>
+    <div class="er"><div class="eyc"><div class="eyl" style="color:var(--accent-content)">27–28</div><div class="eyln"></div></div><div class="eco">
+      <div class="eca"><div class="ecl">最重要</div><div class="eps"><span class="ep p">完成図を描く力</span><span class="ep p">判断の蓄積</span><span class="ep p">小さな独占</span></div></div>
+      <div class="eca"><div class="ecl">育て始める</div><div class="eps"><span class="ep r">ミニマルファブ</span><span class="ep r">起業スキル</span><span class="ep r">ドメイン特化AI</span></div></div>
+      <div class="eca"><div class="ecl">衰退</div><div class="eps"><span class="ep x">情報格差ビジネス</span><span class="ep x">せどり</span><span class="ep x">プロンプト（汎用化）</span></div></div>
+    </div></div>
+    <div class="er"><div class="eyc"><div class="eyl" style="color:var(--accent-society)">29–32</div><div class="eyln"></div></div><div class="eco">
+      <div class="eca"><div class="ecl">最重要</div><div class="eps"><span class="ep p">問いの設計</span><span class="ep p">構造俯瞰力</span><span class="ep p">ミニマル・モノポリー経営</span></div></div>
+      <div class="eca"><div class="ecl">衰退</div><div class="eps"><span class="ep x">専門労働全般</span><span class="ep x">大企業型就職</span><span class="ep x">従来型管理</span></div></div>
+    </div></div>
+    <div class="er"><div class="eyc"><div class="eyl" style="color:var(--accent-energy)">33–38</div><div class="eyln"></div></div><div class="eco">
+      <div class="eca"><div class="ecl">最重要</div><div class="eps"><span class="ep p">エネルギー地政学</span><span class="ep p">体験設計</span><span class="ep p">制度設計</span></div></div>
+      <div class="eca"><div class="ecl">不変</div><div class="eps"><span class="ep e">ユーモア</span><span class="ep e">美意識</span><span class="ep e">哲学的思考</span></div></div>
+    </div></div>
+    <div class="er"><div class="eyc"><div class="eyl" style="color:var(--accent-human)">2038+</div><div class="eyln" style="background:transparent"></div></div><div class="eco">
+      <div class="eca"><div class="ecl">最終価値</div><div class="eps"><span class="ep e">異質な点の接続</span><span class="ep e">予想の裏切り</span><span class="ep e">世界観</span><span class="ep e">面白く生きた蓄積</span></div></div>
+      <div class="eca"><div class="ecl">完全消滅</div><div class="eps"><span class="ep x">技術スキル全般</span><span class="ep x">非対称性ビジネス</span><span class="ep x">定型判断</span></div></div>
+    </div></div>
+  </div>
+</div>
+
+<!-- STACK -->
+<div class="ss fade-in">
+  <h2>価値構造マップ</h2>
+  <div class="ls">
+    <div class="ly l1"><div class="ll">最下層</div><div class="lcn">⚡ エネルギー＝真の通貨</div><div class="lst" style="color:var(--accent-energy)">不変</div></div>
+    <div class="ad">↑</div>
+    <div class="ly l2"><div class="ll">変換層</div><div class="lcn">🤖 AI・ロボ＝エネルギー→知性</div><div class="lst" style="color:var(--accent-ai)">加速進化</div></div>
+    <div class="ad">↑</div>
+    <div class="ly l3"><div class="ll">製造層</div><div class="lcn">🔧 ミニマルファブ＝知性→物質</div><div class="lst" style="color:var(--accent-skill)">民生品化</div></div>
+    <div class="ad">↑</div>
+    <div class="ly l3"><div class="ll">出力層</div><div class="lcn">🎬 コンテンツ＝コモディティ化</div><div class="lst" style="color:var(--accent-content)">無価値化</div></div>
+    <div class="ad">↑</div>
+    <div class="ly l4"><div class="ll">選別層</div><div class="lcn">📡 プラットフォーム＝注意経済</div><div class="lst" style="color:var(--accent-society)">権力集中</div></div>
+    <div class="ad">↑</div>
+    <div class="ly l5"><div class="ll">最上層</div><div class="lcn">🧠 オピニオン＝唯一の堀</div><div class="lst" style="color:var(--accent-human)">希少↑↑</div></div>
+  </div>
+</div>
+
+<div class="ft fade-in">
+  <p class="fq">短期：AIエージェントを使い倒し、小さな独占領域で稼げ<br>中期：判断の蓄積と独自のオピニオンで模倣不能な堀を築け<br>長期：脳内の「繋ぎ方」を独自に育てろ<br><br>「小規模な独占企業（ミニマル・モノポリー）」をいくつ作れるか<br>自律的な基盤と人間関係の基盤を作ること<br>これが人類史における人間の本質<br><br>「我思う、故に我あり」</p>
+  <div class="fa">STRATEGIC FORESIGHT DASHBOARD — FEB 2026</div>
+</div>
+
+<div class="ib fade-in">
+  <h3>📚 主要出典（最終確認: 2026-02-17）</h3>
+  <p style="font-size:12px; line-height:1.9; color:var(--text-secondary);">
+    1. Gartner（企業アプリのAIエージェント搭載予測）<br>
+    <a href="https://www.gartner.com/en/newsroom/press-releases/2025-08-26-gartner-predicts-40-percent-of-enterprise-apps-will-feature-task-specific-ai-agents-by-2026-up-from-less-than-5-percent-in-2025" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">https://www.gartner.com/en/newsroom/press-releases/2025-08-26-gartner-predicts-40-percent-of-enterprise-apps-will-feature-task-specific-ai-agents-by-2026-up-from-less-than-5-percent-in-2025</a><br><br>
+    2. OpenAI（Stargate: 最大$500B/4年）<br>
+    <a href="https://openai.com/blog/announcing-the-stargate-project/" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">https://openai.com/blog/announcing-the-stargate-project/</a><br><br>
+    3. IEA（データセンター電力需要 415TWh→945TWh）<br>
+    <a href="https://www.iea.org/reports/energy-and-ai/executive-summary" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">https://www.iea.org/reports/energy-and-ai/executive-summary</a><br><br>
+    4. Agentic AI Foundation / MCP / A2A（標準化動向）<br>
+    <a href="https://openai.com/index/agentic-ai-foundation/" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">https://openai.com/index/agentic-ai-foundation/</a><br>
+    <a href="https://blog.modelcontextprotocol.io/posts/2025-12-09-mcp-joins-agentic-ai-foundation/" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">https://blog.modelcontextprotocol.io/posts/2025-12-09-mcp-joins-agentic-ai-foundation/</a><br>
+    <a href="https://www.linuxfoundation.org/press/linux-foundation-launches-the-agent2agent-protocol-project-to-enable-secure-intelligent-communication-between-ai-agents" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">https://www.linuxfoundation.org/press/linux-foundation-launches-the-agent2agent-protocol-project-to-enable-secure-intelligent-communication-between-ai-agents</a><br><br>
+    5. 各社IR（設備投資・方針）<br>
+    <a href="https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Fourth-Quarter-Results/default.aspx" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">Amazon</a> /
+    <a href="https://abc.xyz/investor/events/event-details/2026/2025-Q4-Earnings-Call-2026-Dr_C033hS6/default.aspx" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">Alphabet</a> /
+    <a href="https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-Fourth-Quarter-and-Full-Year-2025-Results/default.aspx" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">Meta</a> /
+    <a href="https://www.microsoft.com/investor/reports/ar25/index.html" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">Microsoft</a><br><br>
+    6. ロボティクス・製造関連<br>
+    <a href="https://ir.tesla.com/" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">Tesla IR</a> /
+    <a href="https://assets-ir.tesla.com/tesla-contents/IR/TSLA-Q4-2025-Update.pdf" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">Tesla Q4 2025 Update</a> /
+    <a href="https://shop.unitree.com/products/unitree-g1" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">Unitree G1</a> /
+    <a href="https://www.1x.tech/discover/neo-home-robot" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">1X NEO</a><br>
+    <a href="https://blog.bambulab.com/bambu-lab-launches-h2d-to-rethink-personal-manufacturing/" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">Bambu Lab H2D（発表）</a> /
+    <a href="https://us.store.bambulab.com/products/h2d" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);">Bambu Lab H2D（製品ページ）</a>
+  </p>
+</div>
+
+<script>
+const o=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:.05,rootMargin:'0px 0px -20px 0px'});
+document.querySelectorAll('.fade-in').forEach(el=>o.observe(el));
+</script>
+</body>
+</html>
+
